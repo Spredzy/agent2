@@ -22,6 +22,7 @@ from dciagent.plugins import file as plugin_file
 from dciagent.plugins import ansible as plugin_ansible
 
 from dciclient.v1.api import job as dci_job
+from dciclient.v1.api import jobstate as dci_jobstate
 from dciclient.v1.api import context as dci_context
 from dciclient.v1.api import remoteci as dci_remoteci
 from dciclient.v1.api import topic as dci_topic
@@ -69,14 +70,22 @@ def main(config_file=None):
     # Run the pre hooks
     # TODO(spredzy); This has to be dynamic
     for hook in configuration['dci']['pre-run']:
+        dci_jobstate.create(context, 'pre-run', 'Running %s hook' % hook, context.last_job_id)
         if hook == 'file':
             plugin_file.File(configuration[hook]).run('pre')
         if hook == 'ansible':
-            plugin_ansible.Ansible(configuration[hook]).run('pre', data=datas)
+            plugin_ansible.Ansible(configuration[hook]).run('pre', data=datas, context=context)
 
     # Run the command
+    dci_jobstate.create(context, 'running', 'Running main command', context.last_job_id)
+    for hook in configuration['dci']['run']:
+        if hook == 'file':
+            plugin_file.File(configuration[hook]).run('run')
+        if hook == 'ansible':
+            plugin_ansible.Ansible(configuration[hook]).run('run', data=datas, context=context)
 
     # Retrieve test to run and run them
 
     # Run the post hooks
+    dci_jobstate.create(context, 'success', 'Successfully ran the agent', context.last_job_id)
     print 'Ok!'

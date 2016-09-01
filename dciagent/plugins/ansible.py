@@ -20,6 +20,7 @@ import os
 import subprocess
 
 
+from dciclient.v1 import helper as dci_helper
 from dciagent.plugins import plugin
 
 
@@ -39,11 +40,12 @@ class Ansible(plugin.Plugin):
         return outputText
 
 
-    def run(self, state, data=None):
+    def run(self, state, data=None, context=None):
         """Run ansible-playbook on the specified playbook. """
 
         playbook = None
         log_file = None
+        template = None
 
         if state in self.conf:
             if 'playbook' in self.conf[state]:
@@ -71,6 +73,4 @@ class Ansible(plugin.Plugin):
             
 
         command = 'ansible-playbook %s' % playbook
-        p = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        out, err = p.communicate()
-        # TODO(spredzy): Handle error in the ansible-playbook run
+        dci_helper.run_command(context, command.split())
