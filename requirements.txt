@@ -1,0 +1,6 @@
+requests
+PyYAML
+click==3.3
+setuptools
+dciclient
+jinja2
