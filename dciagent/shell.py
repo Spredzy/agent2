@@ -20,6 +20,7 @@ import click
 from dciagent import config
 from dciagent.plugins import file as plugin_file
 from dciagent.plugins import irc as plugin_irc
+from dciagent.plugins import email as plugin_email
 from dciagent.plugins import ansible as plugin_ansible
 
 from dciclient.v1.api import job as dci_job
@@ -78,6 +79,8 @@ def main(config_file=None):
             plugin_irc.Irc(configuration[hook]).run('pre', data=datas, context=context)
         if hook == 'ansible':
             plugin_ansible.Ansible(configuration[hook]).run('pre', data=datas, context=context)
+        if hook == 'email':
+            plugin_email.Email(configuration[hook]).run('pre', data=datas, context=context)
 
     # Run the command
     dci_jobstate.create(context, 'running', 'Running main command', context.last_job_id)
