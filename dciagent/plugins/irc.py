@@ -17,10 +17,11 @@
 
 from dciagent.plugins import plugin
 
-import sys
-import socket
-import string
 
+import os
+import random
+import string
+import subprocess
 
 class Irc(plugin.Plugin):
 
@@ -32,7 +33,6 @@ class Irc(plugin.Plugin):
         """Connect to the specified IRC server/channel and post a message. """
         
 
-        readbuffer=""
         message = self.conf[state]['message']
 
         server = self.conf['server']
@@ -40,29 +40,19 @@ class Irc(plugin.Plugin):
         chan = self.conf['chan']
 
         nick = self.conf['nick']
-        ident = self.conf['ident']
-        realname = self.conf['realname']
 
-        s=socket.socket( )
-        s.connect((server, port))
-        s.send("NICK %s\r\n" % nick)
-        s.send("USER %s %s bla :%s\r\n" % (ident, server, realname))
-        s.send("JOIN %s\r\n" % chan);
+        ansible_play = """
+- hosts: localhost
+  tasks:
+    - irc: channel='%s'
+           server='%s'
+           msg='%s'
+           nick='%s'
+           port='%s'
+""" % (chan, server, self.format(message, data, context), nick, port)
 
-        while 1:
-            readbuffer=readbuffer+s.recv(1024)
-            temp=string.split(readbuffer, "\n")
-            readbuffer=temp.pop( )
-
-            for line in temp:
-                line=string.rstrip(line)
-                line=string.split(line)
-
-                if(line[0]=="PING"):
-                    s.send("PONG %s\r\n" % line[1])
-                if len(line) > 4 and line[3] == chan and line[4] == ':End':
-                    s.send("PRIVMSG %s :%s \r\n" %
-                        (chan,
-                         self.format(message, data, context))
-                    )
-                    sys.exit(0)
+        random_string = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+        open('/tmp/%s.yml' % random_string, 'w').write(ansible_play)
+        p = subprocess.Popen(['ansible-playbook', '/tmp/%s.yml' % random_string], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p.wait()
+        os.remove('/tmp/%s.yml' % random_string)
