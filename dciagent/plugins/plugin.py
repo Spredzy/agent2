@@ -22,5 +22,26 @@ class Plugin(object):
         self.conf = conf
 
 
+    def format(self, message, data=None, context=None):
+        """Format string by interpolating known variable.
+
+          %j: jobdefinition name
+          %r: remoteci name
+          %c: comma separated list of components name
+          %i: the job id """
+
+        if '%j' in message:
+            message = message.replace('%j', data['jobdefinition']['name'])
+        if '%r' in message:
+            message = message.replace('%r', data['remoteci']['name'])
+        if '%i' in message:
+            message = message.replace('%i', context.last_job_id)
+        if '%c' in message:
+            components = ', '.join([c['name'] for c in data['components']])
+            message = message.replace('%c', components)
+
+
+        return message
+
     def run(self, state):
         pass
