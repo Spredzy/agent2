@@ -1,7 +1,7 @@
 ansible
 requests
 PyYAML
-click==3.3
+click==6.3
 setuptools
 dciclient
 jinja2

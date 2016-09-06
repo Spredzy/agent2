@@ -1,0 +1,16 @@
+auth:
+  dci_login: jdoe
+  dci_password: jdoe
+  dci_cs_url: 'https://api.distributed-ci.io'
+
+dci:
+  topic: TOPIC_ID
+  remoteci: REMOTECI_ID
+  pre-run:
+    - irc
+    - email
+  run:
+    - ansible
+  post-run:
+    - irc
+    - email

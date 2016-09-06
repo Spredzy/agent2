@@ -1,0 +1,9 @@
+ansible:
+  log_file: /var/log/dci_agent/ansible.log
+  pre:
+    template: /srv/dci_agent/pre.yml.j2
+    playbook: /srv/dci_agent/pre.yml
+  run:
+    playbook: /srv/dci_agent/main.yml
+  post:
+    playbook: /srv/dci_agent/post.yml

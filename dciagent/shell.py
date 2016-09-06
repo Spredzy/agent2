@@ -21,7 +21,7 @@ from dciagent import config
 from dciagent.plugins import file as plugin_file
 from dciagent.plugins import irc as plugin_irc
 from dciagent.plugins import email as plugin_email
-from dciagent.plugins import ansible as plugin_ansible
+from dciagent.plugins import ansibleplugin as plugin_ansible
 
 from dciclient.v1.api import job as dci_job
 from dciclient.v1.api import jobstate as dci_jobstate
@@ -78,20 +78,27 @@ def main(config_file=None):
         if hook == 'irc':
             plugin_irc.Irc(configuration[hook]).run('pre', data=datas, context=context)
         if hook == 'ansible':
-            plugin_ansible.Ansible(configuration[hook]).run('pre', data=datas, context=context)
+            plugin_ansible.AnsiblePlugin(configuration[hook]).run('pre', data=datas, context=context)
         if hook == 'email':
             plugin_email.Email(configuration[hook]).run('pre', data=datas, context=context)
 
     # Run the command
-    dci_jobstate.create(context, 'running', 'Running main command', context.last_job_id)
+    #dci_jobstate.create(context, 'running', 'Running main command', context.last_job_id)
     for hook in configuration['dci']['run']:
-        if hook == 'file':
-            plugin_file.File(configuration[hook]).run('run')
         if hook == 'ansible':
-            plugin_ansible.Ansible(configuration[hook]).run('run', data=datas, context=context)
+            plugin_ansible.AnsiblePlugin(configuration[hook]).run('run', data=datas, context=context)
 
     # Retrieve test to run and run them
 
     # Run the post hooks
+    for hook in configuration['dci']['post-run']:
+        dci_jobstate.create(context, 'post-run', 'Running %s hook' % hook, context.last_job_id)
+        if hook == 'file':
+            plugin_file.File(configuration[hook]).run('post')
+        if hook == 'irc':
+            plugin_irc.Irc(configuration[hook]).run('post', data=datas, context=context)
+        if hook == 'ansible':
+            plugin_ansible.AnsiblePlugin(configuration[hook]).run('post', data=datas, context=context)
+        if hook == 'email':
+            plugin_email.Email(configuration[hook]).run('post', data=datas, context=context)
     dci_jobstate.create(context, 'success', 'Successfully ran the agent', context.last_job_id)
-    print 'Ok!'

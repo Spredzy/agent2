@@ -28,8 +28,8 @@ class CallbackModule(callback.CallbackBase):
 
         self._dci_context = dci_context.build_dci_context(
             'https://api.distributed-ci.io',
-            'LOGIN',
-            'PASSWORD'
+            'login',
+            'password'
         )
 
         self._current_jobstate_id = None

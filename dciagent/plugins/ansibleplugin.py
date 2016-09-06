@@ -30,6 +30,7 @@ import jinja2
 import os
 import subprocess
 
+display = Display()
 
 class Options(object):
     def __init__(self, verbosity=None, inventory=None, listhosts=None, subset=None, module_paths=None, extra_vars=None,
@@ -104,6 +105,7 @@ class Runner(object):
         # Playbook to run, from the current working directory.
         pb_dir = os.path.abspath('.')
         playbook_path = "%s/%s" % (pb_dir, playbook)
+        display.verbosity = self.options.verbosity
 
         self.pbex = playbook_executor.PlaybookExecutor(
             #playbooks=[playbook_path],
@@ -112,7 +114,7 @@ class Runner(object):
             variable_manager=self.variable_manager,
             loader=self.loader,
             options=self.options,
-            passwords=None)
+            passwords={})
 
     def run(self, job_id):
         """Run the playbook and returns the playbook's stats."""
@@ -171,5 +173,5 @@ class AnsiblePlugin(plugin.Plugin):
                 self.generate_ansible_playbook_from_template(template, data)
             )
             
-        runner = Runner(playbook=playbook, verbosity=3)
+        runner = Runner(playbook=playbook, verbosity=0)
         stats = runner.run(job_id=context.last_job_id)
