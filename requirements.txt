@@ -1,3 +1,4 @@
+ansible
 requests
 PyYAML
 click==3.3
