@@ -15,8 +15,28 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import glob
 import os
 import yaml
+
+def get_files_path(file_path):
+    """Return a list of file as the result of the Include directive. """
+
+    includes = []
+    with open(file_path, 'r') as f:
+        for line in f:
+            if line.startswith('Include '):
+                includes.append(line)
+
+    pathes = []
+    for include in includes:
+        path = include[8:-1]
+        pathes += glob.glob(path)
+
+    pathes = [ '/etc/%s' % path for path in pathes if path[0] != '/' ]
+
+    return pathes
+
 
 def load_config(config_path=None):
     """Serialize the configuration file into an object and return it. """
@@ -27,9 +47,24 @@ def load_config(config_path=None):
         file_path = os.getenv('DCI_AGENT_CONFIG')
     else:
         file_path = '/etc/dci_agent.conf'
- 
+
     try:
-        config = yaml.load(open(file_path, 'r'))
+        file_path_content = open(file_path, 'r').read()
+        content = None
+        if 'Include ' in file_path_content:
+            pathes = get_files_path(file_path)
+            with open(file_path, 'r') as f:
+                for line in f:
+                    if 'Include ' not in line:
+                        content += line
+            if content:
+                config = yaml.load(content)
+            else:
+                config = {}
+            for path in pathes:
+                config.update(yaml.load(open(path, 'r')))
+        else:
+            config = yaml.load(open(file_path, 'r'))
     except OSError, IOError:
         raise
     except yaml.scanner.ScannerError as e:
