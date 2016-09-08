@@ -24,7 +24,7 @@ class File(plugin.Plugin):
         super(File, self).__init__(conf)
 
 
-    def run(self, state):
+    def run(self, state, data=None, context=None):
         """Write into the file specified in the configuration file.
 
            Write the specified string in the file specified in the

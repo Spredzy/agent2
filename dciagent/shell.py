@@ -69,36 +69,18 @@ def main(config_file=None):
     # Retrieve available job
     datas = get_dci_job_data(context, **configuration['dci'])
 
-    # Run the pre hooks
-    # TODO(spredzy); This has to be dynamic
-    for hook in configuration['dci']['pre-run']:
-        dci_jobstate.create(context, 'pre-run', 'Running %s hook' % hook, context.last_job_id)
-        if hook == 'file':
-            plugin_file.File(configuration[hook]).run('pre')
-        if hook == 'irc':
-            plugin_irc.Irc(configuration[hook]).run('pre', data=datas, context=context)
-        if hook == 'ansible':
-            plugin_ansible.AnsiblePlugin(configuration[hook]).run('pre', data=datas, context=context)
-        if hook == 'email':
-            plugin_email.Email(configuration[hook]).run('pre', data=datas, context=context)
+    for state in states:
+        for hook in configuration['dci'][state]:
 
-    # Run the command
-    #dci_jobstate.create(context, 'running', 'Running main command', context.last_job_id)
-    for hook in configuration['dci']['run']:
-        if hook == 'ansible':
-            plugin_ansible.AnsiblePlugin(configuration[hook]).run('run', data=datas, context=context)
+            dci_jobstate.create(context, state, 'Running %s hook' % hook, context.last_job_id)
 
-    # Retrieve test to run and run them
+            if hook == 'file':
+                plugin_file.File(configuration[hook]).run(state, data=datas, context=context)
+            if hook == 'irc':
+                plugin_irc.Irc(configuration[hook]).run(state, data=datas, context=context)
+            if hook == 'ansible':
+                plugin_ansible.AnsiblePlugin(configuration[hook]).run(state, data=datas, context=context)
+            if hook == 'email':
+                plugin_email.Email(configuration[hook]).run(state, data=datas, context=context)
 
-    # Run the post hooks
-    for hook in configuration['dci']['post-run']:
-        dci_jobstate.create(context, 'post-run', 'Running %s hook' % hook, context.last_job_id)
-        if hook == 'file':
-            plugin_file.File(configuration[hook]).run('post')
-        if hook == 'irc':
-            plugin_irc.Irc(configuration[hook]).run('post', data=datas, context=context)
-        if hook == 'ansible':
-            plugin_ansible.AnsiblePlugin(configuration[hook]).run('post', data=datas, context=context)
-        if hook == 'email':
-            plugin_email.Email(configuration[hook]).run('post', data=datas, context=context)
     dci_jobstate.create(context, 'success', 'Successfully ran the agent', context.last_job_id)

@@ -6,11 +6,18 @@ auth:
 dci:
   topic: TOPIC_ID
   remoteci: REMOTECI_ID
-  pre-run:
+  new:
     - irc
     - email
-  run:
+  pre-run:
+    - mirror-sync
+  running:
     - ansible
   post-run:
+    - tempest
+  success:
+    - irc
+    - email
+  failure:
     - irc
     - email

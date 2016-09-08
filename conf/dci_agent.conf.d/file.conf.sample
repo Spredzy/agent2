@@ -1,6 +1,6 @@
 file:
   path: /var/log/dci_agent_run.log
-  pre:
+  pre-run:
     message: A Run of DCI agent for %j has finished
-  post:
+  post-run:
     message: A Run of DCI agent for %j has finished
