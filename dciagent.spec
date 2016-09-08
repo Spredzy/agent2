@@ -14,6 +14,7 @@ Source3:        dci_agent.conf.d/auth.conf.sample
 Source4:        dci_agent.conf.d/email.conf.sample
 Source5:        dci_agent.conf.d/file.conf.sample
 Source6:        dci_agent.conf.d/irc.conf.sample
+Source7:        dci.py
 
 BuildArch:      noarch
 
@@ -52,6 +53,9 @@ install -m 0644 %{SOURCE4} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 install -m 0644 %{SOURCE5} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 install -m 0644 %{SOURCE6} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 
+mkdir -p %{buildroot}%{_datadir}/dciagent/callback_plugin
+install -m 0644 %{SOURCE7} %{buildroot}%{_datadir}/dciagent/callback_plugin/
+
 %check
 
 %files
@@ -59,6 +63,7 @@ install -m 0644 %{SOURCE6} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 %{python2_sitelib}/*
 %{_sysconfdir}/*
 %{_bindir}/dci-agent
+%{_datadir}/dciagent/callback_plugin/*
 
 
 %changelog
