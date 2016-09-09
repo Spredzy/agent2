@@ -23,6 +23,7 @@ from dciclient.v1.api import file as dci_file
 
 
 class CallbackModule(callback.CallbackBase):
+
     def __init__(self):
         super(CallbackModule, self).__init__()
 
@@ -33,6 +34,8 @@ class CallbackModule(callback.CallbackBase):
         )
 
         self._current_jobstate_id = None
+        self._current_status = None
+        self._current_comment = None
         self._job_id = None
         self._current_step = 0
         self._filename_prefix = ''
@@ -46,9 +49,19 @@ class CallbackModule(callback.CallbackBase):
     def v2_runner_on_ok(self, result, **kwargs):
         """Event executed after each command when it succeed. Get the output
         of the command and create a file associated to the current jobstate."""
+
         if 'stdout_lines' not in result._result:
             return
+
         print("*** v2_runner_on_ok()")
+
+        new_state = jobstate.create(
+            self._dci_context,
+            status=self._current_status,
+            comment=self._current_comment,
+            job_id=self._job_id).json()
+        self._current_jobstate_id = new_state['jobstate']['id']
+
         output = '\n'.join(result._result['stdout_lines']) + '\n'
         dci_file.create(
             self._dci_context,
@@ -57,38 +70,46 @@ class CallbackModule(callback.CallbackBase):
             mime='text/plain',
             jobstate_id=self._current_jobstate_id)
         self._current_step += 1
+
         print("*** result: %s\n" % output)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         """Event executed when a command failed. Create the final jobstate
         on failure."""
+
         print("* v2_runner_on_failed()")
-        jobstate.create(
+
+        output = result._result['stderr'] + '\n'
+        new_state = jobstate.create(
             self._dci_context,
             status='failure',
-            comment=str(result._result['cmd']),
-            job_id=self._job_id)
+            comment=self._current_comment,
+            job_id=self._job_id).json()
+        self._current_jobstate_id = new_state['jobstate']['id']
+
+        dci_file.create(
+            self._dci_context,
+            name=self._filename_prefix + '_' + str(self._current_step),
+            content=output.encode('UTF-8'),
+            mime='text/plain',
+            jobstate_id=self._current_jobstate_id)
 
     def v2_playbook_on_play_start(self, play):
         """Event executed before each play. Create a new jobstate and save
         the current jobstate id."""
+
         print("* v2_playbook_on_play_start()")
+
         self._current_step = 0
         self._filename_prefix = play.get_vars()['dci_log_prefix']
-        status = play.get_vars()['dci_status']
-        comment = play.get_vars()['dci_comment']
+        self._current_status = play.get_vars()['dci_status']
+        self._current_comment = play.get_vars()['dci_comment']
         self._job_id = play.get_variable_manager().extra_vars['job_id']
 
-        new_state = jobstate.create(
-            self._dci_context,
-            status=status,
-            comment=comment,
-            job_id=self._job_id).json()
-        self._current_jobstate_id = new_state['jobstate']['id']
-        print("** jobstate: %s\n** comment: %s\n" % (status, comment))
+        print("** jobstate: %s\n** comment: %s\n" % (self._current_status, self._current_comment))
 
     def v2_playbook_on_start(self, playbook):
         """Event executed before running the playbook. Schedule a job
         and save the job id."""
-        print("* v2_playbook_start()")
 
+        print("* v2_playbook_start()")
