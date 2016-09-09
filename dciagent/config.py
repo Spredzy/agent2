@@ -31,9 +31,9 @@ def get_files_path(file_path):
     pathes = []
     for include in includes:
         path = include[8:-1]
+        if path[0] != '/':
+            path = '/etc/%s' % path
         pathes += glob.glob(path)
-
-    pathes = [ '/etc/%s' % path for path in pathes if path[0] != '/' ]
 
     return pathes
 
