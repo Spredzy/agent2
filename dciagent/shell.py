@@ -16,6 +16,7 @@
 # under the License.
 
 import click
+import requests
 
 from dciagent import config
 from dciagent.plugins import file as plugin_file
@@ -60,6 +61,9 @@ def get_dci_job_data(ctx, **dci):
 @click.option('--config-file', envvar='DCI_AGENT_CONFIG', required=False,
               help="DCI CS url.")
 def main(config_file=None):
+    # redirect the log messages to the DCI Control Server
+    # https://github.com/shazow/urllib3/issues/523
+    requests.packages.urllib3.disable_warnings()
 
     GLOBAL_STATUS = 0
 
