@@ -60,6 +60,9 @@ def get_dci_job_data(ctx, **dci):
 @click.option('--config-file', envvar='DCI_AGENT_CONFIG', required=False,
               help="DCI CS url.")
 def main(config_file=None):
+
+    GLOBAL_STATUS = 0
+
     # Parse and retrieve configuration file
     configuration = config.load_config(config_file)
 
@@ -69,19 +72,48 @@ def main(config_file=None):
     # Retrieve available job
     datas = get_dci_job_data(context, **configuration['dci'])
 
+    states = ['new', 'pre-run', 'running', 'post-run', 'success']
     for state in states:
+
+        if GLOBAL_STATUS != 0:
+            break
+
         if state in configuration['dci']:
             for hook in configuration['dci'][state]:
+
+                if GLOBAL_STATUS != 0:
+                    break
 
                 dci_jobstate.create(context, state, 'Running %s hook' % hook, context.last_job_id)
 
                 if hook == 'file':
-                    plugin_file.File(configuration[hook]).run(state, data=datas, context=context)
+                    GLOBAL_STATUS = plugin_file.File(configuration[hook]).run(state, data=datas, context=context)
                 if hook == 'irc':
-                    plugin_irc.Irc(configuration[hook]).run(state, data=datas, context=context)
+                    GLOBAL_STATUS = plugin_irc.Irc(configuration[hook]).run(state, data=datas, context=context)
                 if hook == 'ansible':
-                    plugin_ansible.AnsiblePlugin(configuration[hook]).run(state, data=datas, context=context)
+                    GLOBAL_STATUS = plugin_ansible.AnsiblePlugin(configuration[hook]).run(state, data=datas, context=context)
                 if hook == 'email':
-                    plugin_email.Email(configuration[hook]).run(state, data=datas, context=context)
+                    GLOBAL_STATUS = plugin_email.Email(configuration[hook]).run(state, data=datas, context=context)
 
-    dci_jobstate.create(context, 'success', 'Successfully ran the agent', context.last_job_id)
+    # Handle the push of the last 'success' job state if no plugin
+    # have been configured to take an action on success
+    if GLOBAL_STATUS == 0 and 'success' not in configuration['dci']:
+        dci_jobstate.create(context, 'success', 'Successfully ran the agent', context.last_job_id)
+
+
+    # Deal with failure state, run on failure actions
+    if GLOBAL_STATUS != 0 and 'failure' in configuration['dci']:
+        for hook in configuration['dci']['failure']:
+            dci_jobstate.create(context, 'failure', 'Running %s hook' % hook, context.last_job_id)
+
+            if hook == 'file':
+                plugin_file.File(configuration[hook]).run('failure', data=datas, context=context)
+            if hook == 'irc':
+                plugin_irc.Irc(configuration[hook]).run('failure', data=datas, context=context)
+            if hook == 'ansible':
+                plugin_ansible.AnsiblePlugin(configuration[hook]).run('failure', data=datas, context=context)
+            if hook == 'email':
+                plugin_email.Email(configuration[hook]).run('failure', data=datas, context=context)
+
+    if GLOBAL_STATUS != 0:
+        dci_jobstate.create(context, 'failure', 'A failure occured during the agent run', context.last_job_id)
