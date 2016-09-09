@@ -61,7 +61,7 @@ install -m 0644 %{SOURCE7} %{buildroot}%{_datadir}/dciagent/callback_plugin/
 %files
 %doc
 %{python2_sitelib}/*
-%{_sysconfdir}/*
+%config(noreplace) %{_sysconfdir}/*
 %{_bindir}/dci-agent
 %{_datadir}/dciagent/callback_plugin/*
 
