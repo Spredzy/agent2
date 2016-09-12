@@ -117,10 +117,13 @@ class Runner(object):
             options=self.options,
             passwords={})
 
-    def run(self, job_id):
+    def run(self, job_id, **kwargs):
         """Run the playbook and returns the playbook's stats."""
 
-        self.variable_manager.extra_vars = {'job_id': job_id}
+        extra_vars = {'job_id': job_id}
+        extra_vars.update(kwargs)
+
+        self.variable_manager.extra_vars = extra_vars
         self.pbex.run()
         return self.pbex._tqm._stats
 
@@ -172,7 +175,11 @@ class AnsiblePlugin(plugin.Plugin):
                 self.generate_ansible_playbook_from_template(template, data)
             )
             
+        kwargs = {}
+        if 'certification_id' in data['remoteci']['data']:
+            kwargs.update({'certification_id': data['remoteci']['data']['certification_id']})
+
         runner = Runner(playbook=playbook, verbosity=0)
-        stats = runner.run(job_id=context.last_job_id)
+        stats = runner.run(job_id=context.last_job_id, **kwargs)
 
         return len(stats.failures)
