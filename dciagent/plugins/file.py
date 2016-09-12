@@ -47,6 +47,7 @@ class File(plugin.Plugin):
 
         try:
             open(path, 'w').write(message)
+            return 0
         except OSError as e:
             raise(e)
         except IOError as e:

@@ -174,3 +174,5 @@ class AnsiblePlugin(plugin.Plugin):
             
         runner = Runner(playbook=playbook, verbosity=0)
         stats = runner.run(job_id=context.last_job_id)
+
+        return len(stats.failures)

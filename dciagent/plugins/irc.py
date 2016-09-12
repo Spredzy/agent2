@@ -56,3 +56,5 @@ class Irc(plugin.Plugin):
         p = subprocess.Popen(['ansible-playbook', '/tmp/%s.yml' % random_string], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         p.wait()
         os.remove('/tmp/%s.yml' % random_string)
+
+        return 0
