@@ -16,9 +16,11 @@
 # under the License.
 
 import click
+import logging
 import requests
 
 from dciagent import config
+from dciagent import log as agent_logging
 from dciagent.plugins import file as plugin_file
 from dciagent.plugins import irc as plugin_irc
 from dciagent.plugins import email as plugin_email
@@ -30,6 +32,8 @@ from dciclient.v1.api import context as dci_context
 from dciclient.v1.api import remoteci as dci_remoteci
 from dciclient.v1.api import topic as dci_topic
 
+
+LOG = logging.getLogger(__name__)
 
 def get_dci_context(**auth):
     """Retrieve a DCI context from the dciclient. """
@@ -61,6 +65,7 @@ def get_dci_job_data(ctx, **dci):
 @click.option('--config-file', envvar='DCI_AGENT_CONFIG', required=False,
               help="DCI CS url.")
 def main(config_file=None):
+
     # redirect the log messages to the DCI Control Server
     # https://github.com/shazow/urllib3/issues/523
     requests.packages.urllib3.disable_warnings()
@@ -70,10 +75,18 @@ def main(config_file=None):
     # Parse and retrieve configuration file
     configuration = config.load_config(config_file)
 
+#    if 'logging' in configuration:
+#        agent_logging.get_logging_configuration(**configuration['logging'])
+
+    LOG = agent_logging.get_logging_configuration(**configuration['logging'])
+    
+
     # Parse and retrieve dci_context
+    LOG.info('Getting DCI context')
     context = get_dci_context(**configuration['auth'])
 
     # Retrieve available job
+    LOG.info('Getting Job data')
     datas = get_dci_job_data(context, **configuration['dci'])
 
     states = ['new', 'pre-run', 'running', 'post-run', 'success']
@@ -83,6 +96,7 @@ def main(config_file=None):
             break
 
         if state in configuration['dci']:
+            LOG.info('Entering "%s" state' % state)
             for hook in configuration['dci'][state]:
 
                 if GLOBAL_STATUS != 0:
@@ -90,6 +104,7 @@ def main(config_file=None):
 
                 dci_jobstate.create(context, state, 'Running %s hook' % hook, context.last_job_id)
 
+                LOG.info('Running "%s" hook for "%s" state' % (hook, state))
                 if hook == 'file':
                     GLOBAL_STATUS = plugin_file.File(configuration[hook]).run(state, data=datas, context=context)
                 if hook == 'irc':
@@ -102,14 +117,17 @@ def main(config_file=None):
     # Handle the push of the last 'success' job state if no plugin
     # have been configured to take an action on success
     if GLOBAL_STATUS == 0 and 'success' not in configuration['dci']:
+        LOG.info('Job has run successfuly')
         dci_jobstate.create(context, 'success', 'Successfully ran the agent', context.last_job_id)
 
 
     # Deal with failure state, run on failure actions
     if GLOBAL_STATUS != 0 and 'failure' in configuration['dci']:
+        LOG.info('Entering "failure" state')
         for hook in configuration['dci']['failure']:
             dci_jobstate.create(context, 'failure', 'Running %s hook' % hook, context.last_job_id)
 
+            LOG.info('Running "%s" hook for "failure" state' % hook)
             if hook == 'file':
                 plugin_file.File(configuration[hook]).run('failure', data=datas, context=context)
             if hook == 'irc':
@@ -120,4 +138,5 @@ def main(config_file=None):
                 plugin_email.Email(configuration[hook]).run('failure', data=datas, context=context)
 
     if GLOBAL_STATUS != 0:
+        LOG.info('A failure occured during the agent run')
         dci_jobstate.create(context, 'failure', 'A failure occured during the agent run', context.last_job_id)
