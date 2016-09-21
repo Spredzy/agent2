@@ -13,40 +13,32 @@
     - name: Install the agent
       package: name=https://packages.distributed-ci.io/dciagent-spredzy.el7.noarch.rpm
 
-    - name: Configure ansible to use dci callback_plugin
-      ini_file: dest=/etc/ansible/ansible.cfg
-                section=defaults
-                option=callback_plugins
-                value=/usr/share/dciagent/callback_plugin
-                backup=yes
-
     - name: Copy the sample file to non-sample file
       shell: cp {{ item }}.sample {{ item }}
       args:
         chdir: /etc/dci_agent.conf.d
       with_items:
         - ansible.conf
-        - auth.conf
         - email.conf
         - file.conf
         - irc.conf     
 
     - name: Edit dci_login in auth.conf
-      lineinfile: "dest=/etc/dci_agent.conf.d/auth.conf
+      lineinfile: "dest=/etc/dci_agent.conf
                   regexp='  dci_login:'
                   line='  dci_login: {{ dci_login }}'"
 
     - name: Edit dci_password in auth.conf
-      lineinfile: "dest=/etc/dci_agent.conf.d/auth.conf
+      lineinfile: "dest=/etc/dci_agent.conf
                   regexp='  dci_password:'
                   line='  dci_password: \'{{ dci_password }}\''"
 
     - name: Edit topic in auth.conf
-      lineinfile: "dest=/etc/dci_agent.conf.d/auth.conf
+      lineinfile: "dest=/etc/dci_agent.conf
                   regexp='  topic:'
                   line='  topic: {{ topic_id }}'"
 
     - name: Edit remoteci in auth.conf
-      lineinfile: "dest=/etc/dci_agent.conf.d/auth.conf
+      lineinfile: "dest=/etc/dci_agent.conf
                   regexp='  remoteci:'
                   line='  remoteci: {{ remoteci_id }}'"

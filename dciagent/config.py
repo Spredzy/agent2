@@ -50,7 +50,7 @@ def load_config(config_path=None):
 
     try:
         file_path_content = open(file_path, 'r').read()
-        content = None
+        content = ''
         if 'Include ' in file_path_content:
             pathes = get_files_path(file_path)
             with open(file_path, 'r') as f:
