@@ -19,16 +19,15 @@ import click
 import requests
 
 from dciagent import config
-from dciagent.plugins import file as plugin_file
-from dciagent.plugins import irc as plugin_irc
-from dciagent.plugins import email as plugin_email
-from dciagent.plugins import ansibleplugin as plugin_ansible
 
 from dciclient.v1.api import job as dci_job
 from dciclient.v1.api import jobstate as dci_jobstate
 from dciclient.v1.api import context as dci_context
 from dciclient.v1.api import remoteci as dci_remoteci
 from dciclient.v1.api import topic as dci_topic
+
+import importlib
+import sys
 
 
 def get_dci_context(**auth):
@@ -56,6 +55,30 @@ def get_dci_job_data(ctx, **dci):
     job_full_data = dci_job.get_full_data(ctx, ctx.last_job_id)
 
     return job_full_data
+
+
+def load_plugin(hook):
+    """Dynamically load a plugin associated to a given hook. The plugin module
+    should be located at 'dciagent.plugins.plugin_<hook>', within the plugin
+    module a class should be found with the name corresponding to the hook's
+    name with the first character capitalized.
+
+    Example: with the hook 'file', a module should be found
+    at 'dciagent.plugins.plugin_file' and the class 'File' within it.
+    """
+
+    try:
+        module_path = 'dciagent.plugins.plugin_%s' % hook
+        loaded_module = importlib.import_module(module_path)
+        class_name = hook.capitalize()
+        return getattr(loaded_module, hook.capitalize())
+    except ImportError:
+        print("hook '%s' does not exist.")
+        sys.exit(1)
+    except AttributeError:
+        print("Attribute '%s' of module '%s' does not exist." % (class_name,
+                                                                 module_path))
+        sys.exit(1)
 
 
 @click.command()
@@ -92,22 +115,10 @@ def main(config_file=None):
                 dci_jobstate.create(context, state, 'Running %s hook' % hook,
                                     context.last_job_id)
 
-                if hook == 'file':
-                    RV = plugin_file.File(configuration[hook]).run(
-                        state, data=datas, context=context
-                    )
-                if hook == 'irc':
-                    RV = plugin_irc.Irc(configuration[hook]).run(
-                        state, data=datas, context=context
-                    )
-                if hook == 'ansible':
-                    RV = plugin_ansible.AnsiblePlugin(configuration[hook]).run(
-                        state, data=datas, context=context
-                    )
-                if hook == 'email':
-                    RV = plugin_email.Email(configuration[hook]).run(
-                        state, data=datas, context=context
-                    )
+                # load the plugin associated to the hook and then run it
+                plugin_class = load_plugin(hook)
+                plugin_class(configuration[hook]).run(state, data=datas,
+                                                      context=context)
 
     # Handle the push of the last 'success' job state if no plugin
     # have been configured to take an action on success
@@ -121,24 +132,11 @@ def main(config_file=None):
             dci_jobstate.create(context, 'failure', 'Running %s hook' % hook,
                                 context.last_job_id)
 
-            if hook == 'file':
-                plugin_file.File(configuration[hook]).run(
-                    'failure', data=datas, context=context
-                )
-            if hook == 'irc':
-                plugin_irc.Irc(configuration[hook]).run(
-                    'failure', data=datas, context=context
-                )
-            if hook == 'ansible':
-                plugin_ansible.AnsiblePlugin(configuration[hook]).run(
-                    'failure', data=datas, context=context
-                )
-            if hook == 'email':
-                plugin_email.Email(configuration[hook]).run(
-                    'failure', data=datas, context=context
-                )
-
     if RV != 0:
         dci_jobstate.create(context, 'failure',
                             'A failure occured during the agent run',
                             context.last_job_id)
+        # load the plugin associated to the hook and then run it
+        plugin_class = load_plugin(hook)
+        plugin_class(configuration[hook]).run('failure', data=datas,
+                                              context=context)
