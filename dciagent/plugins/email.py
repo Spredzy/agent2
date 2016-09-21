@@ -17,21 +17,19 @@
 
 from dciagent.plugins import plugin
 
-
 import os
 import random
 import string
 import subprocess
+
 
 class Email(plugin.Plugin):
 
     def __init__(self, conf):
         super(Email, self).__init__(conf)
 
-
     def run(self, state, data=None, context=None):
         """Send a notification email. """
-        
 
         subject = self.conf[state]['subject']
         message = self.conf[state]['message']
@@ -39,8 +37,11 @@ class Email(plugin.Plugin):
         smtp_server = self.conf['smtp_server']
         smtp_port = self.conf['smtp_port']
         smtp_user = self.conf['smtp_user']
-        smtp_password = self.conf['smtp_password']
+        smtp_passwd = self.conf['smtp_password']
         smtp_recpt = self.conf['smtp_recpt']
+
+        subj = self.format(subject, data, context)
+        msg = self.format(message, data, context)
 
         ansible_play = """
 - hosts: localhost
@@ -53,14 +54,16 @@ class Email(plugin.Plugin):
             subject='%s'
             body='%s'
 
-""" % (smtp_server, smtp_port, smtp_user, smtp_password,
-       smtp_recpt, self.format(subject, data, context),
-       self.format(message, data, context))
+""" % (smtp_server, smtp_port, smtp_user, smtp_passwd, smtp_recpt, subj, msg)
 
-        random_string = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-        open('/tmp/%s.yml' % random_string, 'w').write(ansible_play)
-        p = subprocess.Popen(['ansible-playbook', '/tmp/%s.yml' % random_string], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        for _ in range(10):
+            tmp_string = random.choice(string.ascii_uppercase + string.digits)
+            rand_string = ''.join(tmp_string)
+
+        open('/tmp/%s.yml' % rand_string, 'w').write(ansible_play)
+        p = subprocess.Popen(['ansible-playbook', '/tmp/%s.yml' % rand_string],
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         p.wait()
-        os.remove('/tmp/%s.yml' % random_string)
+        os.remove('/tmp/%s.yml' % rand_string)
 
         return 0

@@ -23,15 +23,14 @@ import random
 import string
 import subprocess
 
+
 class Irc(plugin.Plugin):
 
     def __init__(self, conf):
         super(Irc, self).__init__(conf)
 
-
     def run(self, state, data=None, context=None):
         """Connect to the specified IRC server/channel and post a message. """
-        
 
         message = self.conf[state]['message']
 
@@ -51,10 +50,14 @@ class Irc(plugin.Plugin):
            port='%s'
 """ % (chan, server, self.format(message, data, context), nick, port)
 
-        random_string = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-        open('/tmp/%s.yml' % random_string, 'w').write(ansible_play)
-        p = subprocess.Popen(['ansible-playbook', '/tmp/%s.yml' % random_string], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        for _ in range(10):
+            tmp_string = random.choice(string.ascii_uppercase + string.digits)
+            rand_string = ''.join(tmp_string)
+
+        open('/tmp/%s.yml' % rand_string, 'w').write(ansible_play)
+        p = subprocess.Popen(['ansible-playbook', '/tmp/%s.yml' % rand_string],
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         p.wait()
-        os.remove('/tmp/%s.yml' % random_string)
+        os.remove('/tmp/%s.yml' % rand_string)
 
         return 0

@@ -17,29 +17,32 @@
 
 import jinja2
 import os
-import subprocess
 
 from ansible import inventory
 from ansible import vars
 from ansible.executor import playbook_executor
 from ansible.parsing import dataloader
-from ansible.utils.display import Display
 from ansible.playbook import Playbook
 from ansible.executor import task_queue_manager
 from ansible.plugins import callback
 from dciagent.plugins import plugin
-from dciclient.v1 import helper as dci_helper
 from dciagent.plugins.dci_callback_plugin import CallbackModule as DciCallback
 
 
 class Options(object):
-    def __init__(self, verbosity=None, inventory=None, listhosts=None, subset=None, module_path=None, extra_vars=[],
-                 forks=5, ask_vault_pass=None, vault_password_files=None, new_vault_password_file=None,
-                 output_file=None, tags='all', skip_tags=None, one_line=None, tree=None, ask_sudo_pass=None, ask_su_pass=None,
-                 sudo=None, sudo_user=None, become=None, become_method=None, become_user=None, become_ask_pass=None,
-                 ask_pass=None, private_key_file=None, remote_user=None, connection=None, timeout=None, ssh_common_args=None,
-                 sftp_extra_args=None, scp_extra_args=None, ssh_extra_args=None, poll_interval=None, seconds=None, check=None,
-                 syntax=None, diff=None, force_handlers=None, flush_cache=None, listtasks=None, listtags=None):
+    def __init__(self, verbosity=None, inventory=None, listhosts=None,
+                 subset=None, module_path=None, extra_vars=[], forks=5,
+                 ask_vault_pass=None, vault_password_files=None,
+                 new_vault_password_file=None, output_file=None, tags='all',
+                 skip_tags=None, one_line=None, tree=None, ask_sudo_pass=None,
+                 ask_su_pass=None, sudo=None, sudo_user=None, become=None,
+                 become_method=None, become_user=None, become_ask_pass=None,
+                 ask_pass=None, private_key_file=None, remote_user=None,
+                 connection=None, timeout=None, ssh_common_args=None,
+                 sftp_extra_args=None, scp_extra_args=None,
+                 ssh_extra_args=None, poll_interval=None, seconds=None,
+                 check=None, syntax=None, diff=None, force_handlers=None,
+                 flush_cache=None, listtasks=None, listtags=None):
         self.verbosity = verbosity
         self.inventory = inventory
         self.listhosts = listhosts
@@ -108,10 +111,6 @@ class Runner(object):
         )
         self._variable_manager.set_inventory(self._inventory)
 
-        # Playbook to run, from the current working directory.
-        pb_dir = os.path.abspath('.')
-        playbook_path = "%s/%s" % (pb_dir, playbook)
-
         # Instantiate our Callback plugin
         self._results_callback = DciCallback(dci_context=dci_context)
 
@@ -119,10 +118,6 @@ class Runner(object):
             playbook,
             variable_manager=self._variable_manager,
             loader=self._loader)
-
-        # Playbook to run, from the current working directory.
-        pb_dir = os.path.abspath('.')
-        playbook_path = "%s/%s" % (pb_dir, playbook)
 
         self._pbex = playbook_executor.PlaybookExecutor(
             playbooks=[playbook],
@@ -134,7 +129,7 @@ class Runner(object):
 
     def run(self, job_id, **kwargs):
         """Run the playbook and returns the playbook's stats."""
-       
+
         extra_vars = {'job_id': job_id}
         extra_vars.update(kwargs)
 
@@ -149,16 +144,13 @@ class AnsiblePlugin(plugin.Plugin):
     def __init__(self, conf):
         super(AnsiblePlugin, self).__init__(conf)
 
-
     def generate_ansible_playbook_from_template(self, template_file, data):
-
-        templateLoader = jinja2.FileSystemLoader( searchpath="/" )
-        templateEnv = jinja2.Environment( loader=templateLoader )
-        template = templateEnv.get_template( template_file )
-        outputText = template.render( data )
+        templateLoader = jinja2.FileSystemLoader(searchpath="/")
+        templateEnv = jinja2.Environment(loader=templateLoader)
+        template = templateEnv.get_template(template_file)
+        outputText = template.render(data)
 
         return outputText
-
 
     def run(self, state, data=None, context=None):
         """Run ansible-playbook on the specified playbook. """
@@ -190,10 +182,10 @@ class AnsiblePlugin(plugin.Plugin):
             open(playbook, 'w').write(
                 self.generate_ansible_playbook_from_template(template, data)
             )
-            
         kwargs = {}
         if 'certification_id' in data['remoteci']['data']:
-            kwargs.update({'certification_id': data['remoteci']['data']['certification_id']})
+            kwargs.update({'certification_id':
+                           data['remoteci']['data']['certification_id']})
 
         runner = Runner(playbook=playbook,
                         dci_context=context,

@@ -19,6 +19,7 @@ import glob
 import os
 import yaml
 
+
 def get_files_path(file_path):
     """Return a list of file as the result of the Include directive. """
 
@@ -65,7 +66,7 @@ def load_config(config_path=None):
                 config.update(yaml.load(open(path, 'r')))
         else:
             config = yaml.load(open(file_path, 'r'))
-    except OSError, IOError:
+    except OSError:
         raise
     except yaml.scanner.ScannerError as e:
         raise(e)

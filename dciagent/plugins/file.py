@@ -23,13 +23,12 @@ class File(plugin.Plugin):
     def __init__(self, conf):
         super(File, self).__init__(conf)
 
-
     def run(self, state, data=None, context=None):
         """Write into the file specified in the configuration file.
 
            Write the specified string in the file specified in the
            configuration file while doing all the interpolation process."""
-        
+
         message = None
         path = None
 

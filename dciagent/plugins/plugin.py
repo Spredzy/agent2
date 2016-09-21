@@ -21,7 +21,6 @@ class Plugin(object):
     def __init__(self, conf):
         self.conf = conf
 
-
     def format(self, message, data=None, context=None):
         """Format string by interpolating known variable.
 
@@ -42,7 +41,6 @@ class Plugin(object):
         if '%c' in message:
             components = ', '.join([c['name'] for c in data['components']])
             message = message.replace('%c', components)
-
 
         return message
 
