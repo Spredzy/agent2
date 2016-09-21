@@ -139,10 +139,10 @@ class Runner(object):
         self._pbex.run()
 
 
-class AnsiblePlugin(plugin.Plugin):
+class Ansible(plugin.Plugin):
 
     def __init__(self, conf):
-        super(AnsiblePlugin, self).__init__(conf)
+        super(Ansible, self).__init__(conf)
 
     def generate_ansible_playbook_from_template(self, template_file, data):
         templateLoader = jinja2.FileSystemLoader(searchpath="/")
