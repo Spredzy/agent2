@@ -45,12 +45,14 @@ class CallbackModule(DefaultCallback):
 
     # get the name of each task's commands
     def v2_playbook_on_task_start(self, task, is_conditional):
-        super(CallbackModule, self).v2_playbook_on_task_start(task, is_conditional)
+        super(CallbackModule, self).v2_playbook_on_task_start(task,
+                                                              is_conditional)
 
     # get the result of each task commands
     def v2_runner_on_ok(self, result, **kwargs):
         """Event executed after each command when it succeed. Get the output
-        of the command and create a file associated to the current jobstate."""
+        of the command and create a file associated to the current
+        jobstate."""
         super(CallbackModule, self).v2_runner_on_ok(result, **kwargs)
 
         if 'stdout_lines' in result._result:
@@ -110,4 +112,3 @@ class CallbackModule(DefaultCallback):
             job_id=self._job_id).json()
 
         self._current_jobstate_id = new_state['jobstate']['id']
-
