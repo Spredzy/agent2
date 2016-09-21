@@ -62,7 +62,7 @@ class CallbackModule(DefaultCallback):
         else:
             output = str(result._result)
 
-        if result._task.get_name() != 'setup':
+        if result._task.get_name() != 'setup' and output != '\n':
             dci_file.create(
                 self._dci_context,
                 name=result._task.get_name(),
@@ -76,7 +76,12 @@ class CallbackModule(DefaultCallback):
         on failure."""
         super(CallbackModule, self).v2_runner_on_failed(result, ignore_errors)
 
-        output = result._result['stderr'] + '\n'
+        if result._result['stdout']:
+            output = 'Error Output:\n\n%s\n\nStandard Output:\n\n%s' % (
+                result._result['stderr'], result._result['stdout']
+            )
+        else:
+            output = result._result['stderr']
 
         new_state = jobstate.create(
             self._dci_context,
@@ -85,7 +90,7 @@ class CallbackModule(DefaultCallback):
             job_id=self._job_id).json()
         self._current_jobstate_id = new_state['jobstate']['id']
 
-        if result._task.get_name() != 'setup':
+        if result._task.get_name() != 'setup' and output != '\n':
             dci_file.create(
                 self._dci_context,
                 name=result._task.get_name(),
