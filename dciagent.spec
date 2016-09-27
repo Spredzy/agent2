@@ -13,6 +13,7 @@ Source2:        dci_agent.conf.d/ansible.conf.sample
 Source3:        dci_agent.conf.d/email.conf.sample
 Source4:        dci_agent.conf.d/file.conf.sample
 Source5:        dci_agent.conf.d/irc.conf.sample
+Source6:        dci_agent.conf.d/mirror.conf.sample
 
 BuildArch:      noarch
 
@@ -49,6 +50,7 @@ install -m 0644 %{SOURCE2} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 install -m 0644 %{SOURCE3} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 install -m 0644 %{SOURCE4} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 install -m 0644 %{SOURCE5} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
+install -m 0644 %{SOURCE6} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 
 %check
 
