@@ -43,6 +43,7 @@ class CallbackModule(DefaultCallback):
         # given jobstate which match a play
         self._filename_prefix = ''
 
+
     # get the name of each task's commands
     def v2_playbook_on_task_start(self, task, is_conditional):
         super(CallbackModule, self).v2_playbook_on_task_start(task,
@@ -62,14 +63,23 @@ class CallbackModule(DefaultCallback):
         else:
             output = str(result._result)
 
-        if result._task.get_name() != 'setup' and output != '\n':
+
+        if result._task.get_name() != 'setup' and self._mime_type == 'application/junit':
             dci_file.create(
                 self._dci_context,
                 name=result._task.get_name(),
                 content=output.encode('UTF-8'),
-                mime='text/plain',
+                mime=self._mime_type,
+                job_id=self._job_id)
+        elif result._task.get_name() != 'setup' and output != '\n':
+            dci_file.create(
+                self._dci_context,
+                name=result._task.get_name(),
+                content=output.encode('UTF-8'),
+                mime=self._mime_type,
                 jobstate_id=self._current_jobstate_id)
             self._current_step += 1
+
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         """Event executed when a command failed. Create the final jobstate
@@ -95,7 +105,7 @@ class CallbackModule(DefaultCallback):
                 self._dci_context,
                 name=result._task.get_name(),
                 content=output.encode('UTF-8'),
-                mime='text/plain',
+                mime=self._mime_type,
                 jobstate_id=self._current_jobstate_id)
             self._current_step += 1
 
@@ -109,6 +119,10 @@ class CallbackModule(DefaultCallback):
         status = play.get_vars()['dci_status']
         self._current_comment = play.get_vars()['dci_comment']
         self._job_id = play.get_variable_manager().extra_vars['job_id']
+        if 'dci_mime_type' in play.get_vars():
+            self._mime_type = play.get_vars()['dci_mime_type']
+        else:
+            self._mime_type = 'text/plain'
 
         new_state = jobstate.create(
             self._dci_context,
