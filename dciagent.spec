@@ -14,6 +14,7 @@ Source3:        dci_agent.conf.d/email.conf.sample
 Source4:        dci_agent.conf.d/file.conf.sample
 Source5:        dci_agent.conf.d/irc.conf.sample
 Source6:        dci_agent.conf.d/mirror.conf.sample
+Source6:        dci_agent.conf.d/tests.conf.sample
 
 BuildArch:      noarch
 
@@ -51,6 +52,7 @@ install -m 0644 %{SOURCE3} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 install -m 0644 %{SOURCE4} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 install -m 0644 %{SOURCE5} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 install -m 0644 %{SOURCE6} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
+install -m 0644 %{SOURCE7} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 
 %check
 
@@ -64,4 +66,3 @@ install -m 0644 %{SOURCE6} %{buildroot}%{_sysconfdir}/dci_agent.conf.d/
 %changelog
 * Tue Sep 06 2016 Yanis Guenane <yguenane@redhat.com> 0.1-1
 - Initial commit
-
